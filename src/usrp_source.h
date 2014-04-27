@@ -25,11 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rtl-sdr.h>
+#include "libhackrf/hackrf.h"
 
 #include "usrp_complex.h"
 #include "circular_buffer.h"
 
+int hackrf_rx_callback(hackrf_transfer* transfer);
 
 class usrp_source {
 public:
@@ -38,7 +39,6 @@ public:
 	~usrp_source();
 
 	int open(unsigned int subdev);
-	int read(complex *buf, unsigned int num_samples, unsigned int *samples_read);
 	int fill(unsigned int num_samples, unsigned int *overrun);
 	int tune(double freq);
 	int set_freq_correction(int ppm);
@@ -57,10 +57,15 @@ public:
 	double			m_center_freq;
 	int			m_freq_corr;
 
+    int hackrf_rx_count;  // used for and hackrf rx callback
+#define USB_PACKET_SIZE     (2 * 16384)
+    int8_t ubuf[USB_PACKET_SIZE]; // used for hackrf rx callback
+
+
 private:
 	void calculate_decimation();
 
-	rtlsdr_dev_t		*dev;
+	hackrf_device		*dev;
 
 	float			m_sample_rate;
 	float			m_desired_sample_rate;

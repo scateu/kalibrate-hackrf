@@ -75,8 +75,8 @@ int g_debug = 0;
 
 void usage(char *prog) {
 
-	printf("kalibrate v%s-rtl, Copyright (c) 2010, Joshua Lackey\n", kal_version_string);
-	printf("modified for use with rtl-sdr devices, Copyright (c) 2012, Steve Markgraf");
+	printf("kalibrate v%s-hackrf, Copyright (c) 2010, Joshua Lackey\n", kal_version_string);
+	printf("modified for use with hackrf devices, Copyright (c) 2014, scateu@gmail.com");
 	printf("\nUsage:\n");
 	printf("\tGSM Base Station Scan:\n");
 	printf("\t\t%s <-s band indicator> [options]\n", basename(prog));
@@ -90,7 +90,7 @@ void usage(char *prog) {
 	printf("\t-c\tchannel of nearby GSM base station\n");
 	printf("\t-b\tband indicator (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
 	printf("\t-g\tgain in dB\n");
-	printf("\t-d\trtl-sdr device index\n");
+	printf("\t-d\trtl-sdr device index\n"); // TODO: fuck it off.
 	printf("\t-e\tinitial frequency error in ppm\n");
 	printf("\t-v\tverbose\n");
 	printf("\t-D\tenable debug messages\n");
@@ -266,12 +266,10 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 //	u->set_antenna(antenna);
-	if (gain != 0) {
-		if(!u->set_gain(gain)) {
-			fprintf(stderr, "error: usrp_source::set_gain\n");
-			return -1;
-		}
-	}
+    if(!u->set_gain(gain)) {
+        fprintf(stderr, "error: usrp_source::set_gain\n");
+        return -1;
+    }
 
 	if (ppm_error != 0) {
 		if(u->set_freq_correction(ppm_error) < 0) {

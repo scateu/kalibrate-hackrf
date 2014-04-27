@@ -78,7 +78,7 @@ usrp_source::~usrp_source() {
 
 	stop();
 	delete m_cb;
-	rtlsdr_close(dev);
+	hackrf_close(dev);
 	pthread_mutex_destroy(&m_u_mutex);
 }
 
@@ -86,6 +86,14 @@ usrp_source::~usrp_source() {
 void usrp_source::stop() {
 
 	pthread_mutex_lock(&m_u_mutex);
+
+    int result;
+    result = hackrf_stop_rx(dev);                                                                                                          
+    if( result != HACKRF_SUCCESS ) {                                                                                                              
+            printf("hackrf_stop_rx() failed: %s (%d)\n", hackrf_error_name((hackrf_error)result), result);                                              
+            pthread_mutex_unlock(&m_u_mutex);
+            exit(1);
+    }
 	pthread_mutex_unlock(&m_u_mutex);
 }
 
@@ -93,6 +101,14 @@ void usrp_source::stop() {
 void usrp_source::start() {
 
 	pthread_mutex_lock(&m_u_mutex);
+
+    int result;
+    result = hackrf_start_rx(dev, hackrf_rx_callback, this);                                                                           
+    if( result != HACKRF_SUCCESS ) {
+            printf("hackrf_start_rx() failed: %s (%d)\n", hackrf_error_name((hackrf_error)result), result);                                             
+            pthread_mutex_unlock(&m_u_mutex);
+		    exit(1);
+    }                                                                                                                                             
 	pthread_mutex_unlock(&m_u_mutex);
 }
 
@@ -124,10 +140,12 @@ int usrp_source::tune(double freq) {
 
 	pthread_mutex_lock(&m_u_mutex);
 	if (freq != m_center_freq) {
-		r = rtlsdr_set_center_freq(dev, (uint32_t)freq);
+
+    r = hackrf_set_freq(dev, (uint64_t)freq);
+    //printf("hackrf_set_freq: %d\n", int(freq));
 
 		if (r < 0)
-			fprintf(stderr, "Tuning to %u Hz failed!\n", (uint32_t)freq);
+			fprintf(stderr, "Tuning failed!\n");
 		else
 			m_center_freq = freq;
 	}
@@ -139,7 +157,8 @@ int usrp_source::tune(double freq) {
 
 int usrp_source::set_freq_correction(int ppm) {
 	m_freq_corr = ppm;
-	return rtlsdr_set_freq_correction(dev, ppm);
+    //return rtlsdr_set_freq_correction(dev, ppm);
+    return 0; // TODO: add support for ppm correction
 }
 
 bool usrp_source::set_antenna(int antenna) {
@@ -148,16 +167,15 @@ bool usrp_source::set_antenna(int antenna) {
 }
 
 bool usrp_source::set_gain(float gain) {
-	int r, g = gain * 10;
+	//int g = gain * 10;
 
-	/* Enable manual gain */
-	r = rtlsdr_set_tuner_gain_mode(dev, 1);
-	if (r < 0)
-		fprintf(stderr, "WARNING: Failed to enable manual gain.\n");
+	//fprintf(stderr, "Setting gain: %.1f dB\n", gain/10);
+    int r=0;
 
-	fprintf(stderr, "Setting gain: %.1f dB\n", gain/10);
-	r = rtlsdr_set_tuner_gain(dev, g);
-
+    printf("hackrf: set gain\n");
+    r = hackrf_set_amp_enable(dev, 1);
+	r |= hackrf_set_vga_gain(dev, 32);
+    r |= hackrf_set_lna_gain(dev, 32);
 	return (r < 0) ? 0 : 1;
 }
 
@@ -168,71 +186,104 @@ bool usrp_source::set_gain(float gain) {
 int usrp_source::open(unsigned int subdev) {
 	int i, r, device_count, count;
 	uint32_t dev_index = subdev;
-	uint32_t samp_rate = 270833;
+//uint32_t samp_rate = 270833;
+	uint32_t samp_rate = 1000000;
 
-	m_sample_rate = 270833.002142;
+	m_sample_rate = 1000000;
 
-	device_count = rtlsdr_get_device_count();
-	if (!device_count) {
-		fprintf(stderr, "No supported devices found.\n");
-		exit(1);
-	}
 
-	fprintf(stderr, "Found %d device(s):\n", device_count);
-	for (i = 0; i < device_count; i++)
-		fprintf(stderr, "  %d:  %s\n", i, rtlsdr_get_device_name(i));
-	fprintf(stderr, "\n");
+    printf("hackrf_init()\n");
+    r = hackrf_init();
+    if (r != HACKRF_SUCCESS) {
+            printf("hackrf_init() failed.");
+            return EXIT_FAILURE;
+    }
 
-	fprintf(stderr, "Using device %d: %s\n",
-		dev_index,
-		rtlsdr_get_device_name(dev_index));
-
-	r = rtlsdr_open(&dev, dev_index);
-	if (r < 0) {
-		fprintf(stderr, "Failed to open rtlsdr device #%d.\n", dev_index);
+    printf("hackrf_open()\n");
+	r = hackrf_open(&dev);
+	if (r != HACKRF_SUCCESS) {
+		fprintf(stderr, "Failed to open hackrf device.\n");
 		exit(1);
 	}
 
 	/* Set the sample rate */
-	r = rtlsdr_set_sample_rate(dev, samp_rate);
-	if (r < 0)
+	r = hackrf_set_sample_rate(dev, samp_rate);
+    printf("hackrf_set_sample_rate()\n");
+	if (r != HACKRF_SUCCESS)
 		fprintf(stderr, "WARNING: Failed to set sample rate.\n");
 
-	/* Reset endpoint before we start reading from it (mandatory) */
-	r = rtlsdr_reset_buffer(dev);
-	if (r < 0)
-		fprintf(stderr, "WARNING: Failed to reset buffers.\n");
-
-//	r = rtlsdr_set_offset_tuning(dev, 1);
-//	if (r < 0)
-//		fprintf(stderr, "WARNING: Failed to enable offset tuning\n");
-
+    r = hackrf_set_baseband_filter_bandwidth(dev, 2500000);
+    if( r != HACKRF_SUCCESS ) {
+            printf("hackrf_baseband_filter_bandwidth_set() failed: \n");
+            return EXIT_FAILURE;
+    }
 	return 0;
 }
 
 #define USB_PACKET_SIZE		(2 * 16384)
 #define FLUSH_SIZE		512
 
+int hackrf_rx_callback(hackrf_transfer* transfer) {
+        //printf("hackrf_rx_callback()\n");
+        usrp_source * u;
+        u = (usrp_source*)(transfer->rx_ctx);
+
+        size_t bytes_to_write;
+        size_t hackrf_rx_count_new = u->hackrf_rx_count + transfer->valid_length;
+
+        int count_left = USB_PACKET_SIZE - hackrf_rx_count_new;
+        if ( count_left <= 0 ) {
+                bytes_to_write = transfer->valid_length + count_left;
+        } else {
+                bytes_to_write = transfer->valid_length;
+        }
+
+        //  cout << transfer->valid_length  << " " << hackrf_rx_count << " " << bytes_to_write << "\n";
+        if (bytes_to_write!=0)
+        {
+                memcpy(u->ubuf + u->hackrf_rx_count, transfer->buffer, bytes_to_write );
+                //    for (size_t i=0; i<bytes_to_write; i++) {
+                //      hackrf_rx_buf[hackrf_rx_count+i] = transfer->buffer[i];
+                //    }
+                u->hackrf_rx_count = u->hackrf_rx_count + bytes_to_write;
+        }
+        //  cout << transfer->valid_length  << " " << hackrf_rx_count << " " << bytes_to_write << "\n";
+
+        return(0);
+}
+
 
 int usrp_source::fill(unsigned int num_samples, unsigned int *overrun_i) {
 
-	unsigned char ubuf[USB_PACKET_SIZE];
 	unsigned int i, j, space, overruns = 0;
 	complex *c;
 	int n_read;
+    int result;
+
+    //printf("start fill..\n");
 
 	while((m_cb->data_available() < num_samples) && (m_cb->space_available() > 0)) {
 
-		// read one usb packet from the usrp
-		pthread_mutex_lock(&m_u_mutex);
+		    // read one usb packet from hackrf
+            pthread_mutex_lock(&m_u_mutex);
 
-		if (rtlsdr_read_sync(dev, ubuf, sizeof(ubuf), &n_read) < 0) {
-			pthread_mutex_unlock(&m_u_mutex);
-			fprintf(stderr, "error: usrp_standard_rx::read\n");
-			return -1;
-		}
 
-		pthread_mutex_unlock(&m_u_mutex);
+            // fill ubuf with sizeof(ubuf) sample points. n_read to indicate samples actually wrote.
+            hackrf_rx_count = 0; // clear counter                                                                                                         
+            while(hackrf_is_streaming(dev) != HACKRF_TRUE){
+                    printf("waiting for streaming...(%d)\n",hackrf_is_streaming(dev));
+            }
+
+            while(hackrf_is_streaming(dev) == HACKRF_TRUE) {
+                    //printf("%d\n",hackrf_rx_count );
+                    if( hackrf_rx_count == USB_PACKET_SIZE ){
+                            break;
+                    }
+            }
+
+            n_read = hackrf_rx_count;
+
+            pthread_mutex_unlock(&m_u_mutex);
 
 		// write complex<short> input to complex<float> output
 		c = (complex *)m_cb->poke(&space);
@@ -242,7 +293,8 @@ int usrp_source::fill(unsigned int num_samples, unsigned int *overrun_i) {
 
 		// write data
 		for(i = 0, j = 0; i < space; i += 1, j += 2)
-			c[i] = complex((ubuf[j] - 127) * 256, (ubuf[j + 1] - 127) * 256);
+			//c[i] = complex((ubuf[j] - 127) * 256, (ubuf[j + 1] - 127) * 256);
+			c[i] = complex(ubuf[j] * 256, ubuf[j + 1] * 256);
 
 		// update cb
 		m_cb->wrote(i);
@@ -261,22 +313,6 @@ int usrp_source::fill(unsigned int num_samples, unsigned int *overrun_i) {
 }
 
 
-int usrp_source::read(complex *buf, unsigned int num_samples,
-   unsigned int *samples_read) {
-
-	unsigned int n;
-
-	if(fill(num_samples, 0))
-		return -1;
-
-	n = m_cb->read(buf, num_samples);
-
-	if(samples_read)
-		*samples_read = n;
-
-	return 0;
-}
-
 
 /*
  * Don't hold a lock on this and use the usrp at the same time.
@@ -290,7 +326,7 @@ circular_buffer *usrp_source::get_buffer() {
 int usrp_source::flush(unsigned int flush_count) {
 
 	m_cb->flush();
-	fill(flush_count * FLUSH_SIZE, 0);
+    //fill(flush_count * FLUSH_SIZE, 0);
 	m_cb->flush();
 
 	return 0;
