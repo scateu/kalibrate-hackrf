@@ -142,7 +142,7 @@ int usrp_source::tune(double freq) {
 	if (freq != m_center_freq) {
 
     r = hackrf_set_freq(dev, (uint64_t)freq);
-    //printf("hackrf_set_freq: %d\n", int(freq));
+    printf("hackrf_set_freq: %d\n", int(freq));
 
 		if (r < 0)
 			fprintf(stderr, "Tuning failed!\n");
