@@ -112,8 +112,8 @@ main (int argc, char **argv)
   char *endptr;
   int c, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
   int ppm_error = 0;
-  unsigned int subdev = 0, decimation = 192;
-  long int fpga_master_clock_freq = 52000000;
+  unsigned int subdev = 0, decimation = 29;
+  long int fpga_master_clock_freq = 8000000; // lowest rate supported
   int amp_gain = 0, lna_gain = 0, vga_gain = 0;
   double freq = -1.0, fd;
   usrp_source *u;
@@ -247,19 +247,9 @@ main (int argc, char **argv)
       chan = freq_to_arfcn (freq, &bi);
     }
 
-#if 0
-  // sanity check clock
-  if (fpga_master_clock_freq < 48000000)
-    {
-      fprintf (stderr, "error: FPGA master clock too slow: %li\n",
-	       fpga_master_clock_freq);
-      usage (argv[0]);
-    }
-
   // calculate decimation -- get as close to GSM rate as we can
   fd = (double) fpga_master_clock_freq / GSM_RATE;
   decimation = (unsigned int) fd;
-#endif
   if (g_debug)
     {
 #ifdef D_HOST_OSX

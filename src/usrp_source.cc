@@ -187,16 +187,17 @@ usrp_source::set_freq_correction (int ppm)
   return 0;			// TODO: add support for ppm correction
 }
 
-bool usrp_source::set_antenna (int antenna)
+bool
+usrp_source::set_antenna (int antenna)
 {
 
   return 0;
 }
 
-bool usrp_source::set_gain (int amp_gain, int lna_gain, int vga_gain)
+bool
+usrp_source::set_gain (int amp_gain, int lna_gain, int vga_gain)
 {
-  int
-    r = 0;
+  int r = 0;
 
   lna_gain = (((lna_gain + 7) / 8) * 8);
   vga_gain = (((vga_gain + 1) / 2) * 2);
@@ -226,9 +227,9 @@ usrp_source::open (unsigned int subdev)
 {
   int i, r, device_count, count;
   uint32_t dev_index = subdev;
-//uint32_t samp_rate = 270833;
-  uint32_t samp_rate = 1000000;
+  uint32_t samp_rate;
 
+  samp_rate = m_fpga_master_clock_freq; // from constructor
   m_sample_rate = 1000000;
 
 
@@ -253,7 +254,7 @@ usrp_source::open (unsigned int subdev)
   /* Set the sample rate */
   r = hackrf_set_sample_rate (dev, samp_rate);
   if (g_verbosity)
-    printf ("hackrf_set_sample_rate()\n");
+    printf ("hackrf_set_sample_rate(%u)\n", samp_rate);
   if (r != HACKRF_SUCCESS)
     fprintf (stderr, "WARNING: Failed to set sample rate.\n");
 
