@@ -11,3 +11,12 @@ Copyright (c) 2012, Steve Markgraf (steve@steve-m.de)
 modified for use with hackrf devices,
 Copyright (c) 2014, Wang Kang (scateu@gmail.com) 
 http://hackrf.net  : A Chinese HackRF Community
+
+
+2014-8-23 Update:
+
+Thanks to chris.kuethe@gmail.com who did a bunch of tinkering with this port of kalibrate.
+
+https://github.com/ckuethe/kalibrate-hackrf/
+
+This now runs as fast as kalibrate-rtl
