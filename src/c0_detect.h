@@ -25,4 +25,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int c0_detect(usrp_source *u, int bi);
+int c0_detect (usrp_source * u, int bi);

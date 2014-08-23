@@ -27,5 +27,6 @@
 
 #include <complex>
 
-typedef std::complex<float> complex;
-
+typedef
+std::complex < float >
+  complex;

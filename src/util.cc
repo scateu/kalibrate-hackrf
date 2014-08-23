@@ -31,67 +31,85 @@
 #include <math.h>
 
 
-void display_freq(float f) {
+void
+display_freq (float f)
+{
 
-	if(f >= 0) {
-		printf("+ ");
-	} else {
-		printf("- ");
-		f = -f;
-	}
-	if(fabs(f) >= 1e9) {
-		printf("%.3fGHz", f / 1e9);
-		return;
-	}
-	if(fabs(f) >= 1e6) {
-		printf("%.1fMHz", f / 1e6);
-		return;
-	}
-	if(fabs(f) >= 1e3) {
-		printf("%.3fkHz", f / 1e3);
-		return;
-	}
-	if(fabs(f) >= 1e2) {
-		printf("%.0fHz", f);
-		return;
-	}
-	if(fabs(f) >= 1e1) {
-		printf(" %.0fHz", f);
-		return;
-	}
-	printf("  %.0fHz", f);
+  if (f >= 0)
+    {
+      printf ("+ ");
+    }
+  else
+    {
+      printf ("- ");
+      f = -f;
+    }
+  if (fabs (f) >= 1e9)
+    {
+      printf ("%.3fGHz", f / 1e9);
+      return;
+    }
+  if (fabs (f) >= 1e6)
+    {
+      printf ("%.1fMHz", f / 1e6);
+      return;
+    }
+  if (fabs (f) >= 1e3)
+    {
+      printf ("%.3fkHz", f / 1e3);
+      return;
+    }
+  if (fabs (f) >= 1e2)
+    {
+      printf ("%.0fHz", f);
+      return;
+    }
+  if (fabs (f) >= 1e1)
+    {
+      printf (" %.0fHz", f);
+      return;
+    }
+  printf ("  %.0fHz", f);
 }
 
 
-void sort(float *b, unsigned int len) {
+void
+sort (float *b, unsigned int len)
+{
 
-	for(unsigned int i = 0; i < len; i++) {
-		for(unsigned int j = i + 1; j < len; j++) {
-			if(b[j] < b[i]) {
-				float t = b[i];
-				b[i] = b[j];
-				b[j] = t;
-			}
-		}
+  for (unsigned int i = 0; i < len; i++)
+    {
+      for (unsigned int j = i + 1; j < len; j++)
+	{
+	  if (b[j] < b[i])
+	    {
+	      float t = b[i];
+	      b[i] = b[j];
+	      b[j] = t;
+	    }
 	}
+    }
 }
 
 
-double avg(float *b, unsigned int len, float *stddev) {
+double
+avg (float *b, unsigned int len, float *stddev)
+{
 
-	unsigned int i;
-	double t = 0.0, a = 0.0, s = 0.0;
+  unsigned int i;
+  double t = 0.0, a = 0.0, s = 0.0;
 
-	for(i = 0; i < len; i++)
-		t += b[i];
-	a = t / len;
-	if(stddev) {
-		for(i = 0; i < len; i++)
-			s += (b[i] - a) * (b[i] - a);
-		s /= len;
-		s = sqrt(s);
-		*stddev = s;
-	}
+  for (i = 0; i < len; i++)
+    t += b[i];
+  a = t / len;
+  if (stddev)
+    {
+      for (i = 0; i < len; i++)
+	s += (b[i] - a) * (b[i] - a);
+      s /= len;
+      s = sqrt (s);
+      *stddev = s;
+    }
 
-	return a;
+  return a;
 }

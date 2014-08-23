@@ -25,6 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void display_freq(float f);
-void sort(float *b, unsigned int len);
-double avg(float *b, unsigned int len, float *stddev);
+void display_freq (float f);
+void sort (float *b, unsigned int len);
+double avg (float *b, unsigned int len, float *stddev);

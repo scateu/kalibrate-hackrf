@@ -25,19 +25,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum {
-	BI_NOT_DEFINED,
-	GSM_850,
-	GSM_R_900,
-	GSM_900,
-	GSM_E_900,
-	DCS_1800,
-	PCS_1900
+enum
+{
+  BI_NOT_DEFINED,
+  GSM_850,
+  GSM_R_900,
+  GSM_900,
+  GSM_E_900,
+  DCS_1800,
+  PCS_1900
 };
 
-const char *bi_to_str(int bi);
-int str_to_bi(char *s);
-double arfcn_to_freq(int n, int *bi = 0);
-int freq_to_arfcn(double freq, int *bi = 0);
-int first_chan(int bi);
-int next_chan(int chan, int bi);
+const char *bi_to_str (int bi);
+int str_to_bi (char *s);
+double arfcn_to_freq (int n, int *bi = 0);
+int freq_to_arfcn (double freq, int *bi = 0);
+int first_chan (int bi);
+int next_chan (int chan, int bi);
