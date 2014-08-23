@@ -26,4 +26,4 @@
  */
 
 #pragma once
-static const char * const kal_version_string = PACKAGE_VERSION;
+static const char *const kal_version_string = PACKAGE_VERSION;

@@ -49,39 +49,41 @@
 #include <Windows.h>
 #endif
 
-class circular_buffer {
+class circular_buffer
+{
 public:
-	circular_buffer(const unsigned int buf_len, const unsigned int item_size = 1, const unsigned int overwrite = 0);
-	~circular_buffer();
+  circular_buffer (const unsigned int buf_len, const unsigned int item_size =
+		   1, const unsigned int overwrite = 0);
+   ~circular_buffer ();
 
-	unsigned int read(void *buf, const unsigned int buf_len);
-	void *peek(unsigned int *buf_len);
-	unsigned int purge(const unsigned int buf_len);
-	void *poke(unsigned int *buf_len);
-	void wrote(unsigned int len);
-	unsigned int write(const void *buf, const unsigned int buf_len);
-	unsigned int data_available();
-	unsigned int space_available();
-	void flush();
-	void flush_nolock();
-	void lock();
-	void unlock();
-	unsigned int buf_len();
+  unsigned int read (void *buf, const unsigned int buf_len);
+  void *peek (unsigned int *buf_len);
+  unsigned int purge (const unsigned int buf_len);
+  void *poke (unsigned int *buf_len);
+  void wrote (unsigned int len);
+  unsigned int write (const void *buf, const unsigned int buf_len);
+  unsigned int data_available ();
+  unsigned int space_available ();
+  void flush ();
+  void flush_nolock ();
+  void lock ();
+  void unlock ();
+  unsigned int buf_len ();
 
 private:
 #ifdef _WIN32
-	HANDLE d_handle;
-	LPVOID d_first_copy;
-	LPVOID d_second_copy;
+    HANDLE d_handle;
+  LPVOID d_first_copy;
+  LPVOID d_second_copy;
 #endif
-	void *m_buf;
-	unsigned int m_buf_len, m_buf_size, m_r, m_w, m_item_size;
-	unsigned long long m_read, m_written;
+  void *m_buf;
+  unsigned int m_buf_len, m_buf_size, m_r, m_w, m_item_size;
+  unsigned long long m_read, m_written;
 
-	unsigned int m_overwrite;
+  unsigned int m_overwrite;
 
-	void *m_base;
-	unsigned int m_pagesize;
+  void *m_base;
+  unsigned int m_pagesize;
 
-	pthread_mutex_t	m_mutex;
+  pthread_mutex_t m_mutex;
 };

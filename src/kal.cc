@@ -73,227 +73,242 @@
 int g_verbosity = 0;
 int g_debug = 0;
 
-void usage(char *prog) {
+void
+usage (char *prog)
+{
 
-	printf("kalibrate v%s-hackrf, Copyright (c) 2010, Joshua Lackey\n", kal_version_string);
-	printf("modified for use with hackrf devices, Copyright (c) 2014, scateu@gmail.com");
-	printf("\nUsage:\n");
-	printf("\tGSM Base Station Scan:\n");
-	printf("\t\t%s <-s band indicator> [options]\n", basename(prog));
-	printf("\n");
-	printf("\tClock Offset Calculation:\n");
-	printf("\t\t%s <-f frequency | -c channel> [options]\n", basename(prog));
-	printf("\n");
-	printf("Where options are:\n");
-	printf("\t-s\tband to scan (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
-	printf("\t-f\tfrequency of nearby GSM base station\n");
-	printf("\t-c\tchannel of nearby GSM base station\n");
-	printf("\t-b\tband indicator (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
-	printf("\t-g\tgain in dB\n");
-	printf("\t-d\trtl-sdr device index\n"); // TODO: fuck it off.
-	printf("\t-e\tinitial frequency error in ppm\n");
-	printf("\t-v\tverbose\n");
-	printf("\t-D\tenable debug messages\n");
-	printf("\t-h\thelp\n");
-	exit(-1);
+  printf ("kalibrate v%s-hackrf, Copyright (c) 2010, Joshua Lackey\n",
+	  kal_version_string);
+  printf
+    ("modified for use with hackrf devices, Copyright (c) 2014, scateu@gmail.com");
+  printf ("\nUsage:\n");
+  printf ("\tGSM Base Station Scan:\n");
+  printf ("\t\t%s <-s band indicator> [options]\n", basename (prog));
+  printf ("\n");
+  printf ("\tClock Offset Calculation:\n");
+  printf ("\t\t%s <-f frequency | -c channel> [options]\n", basename (prog));
+  printf ("\n");
+  printf ("Where options are:\n");
+  printf ("\t-s\tband to scan (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
+  printf ("\t-f\tfrequency of nearby GSM base station\n");
+  printf ("\t-c\tchannel of nearby GSM base station\n");
+  printf ("\t-b\tband indicator (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
+  printf ("\t-a\trf amplifier enable\n");
+  printf ("\t-g\tvga (bb) gain in dB, 0-40dB, 8dB step\n");
+  printf ("\t-l\tlna (if) gain in dB, 0-62dB, 2dB step\n");
+  printf ("\t-d\trtl-sdr device index\n");	// TODO: fuck it off.
+  printf ("\t-e\tinitial frequency error in ppm\n");
+  printf ("\t-v\tverbose\n");
+  printf ("\t-D\tenable debug messages\n");
+  printf ("\t-h\thelp\n");
+  exit (-1);
 }
 
 
-int main(int argc, char **argv) {
+int
+main (int argc, char **argv)
+{
 
-	char *endptr;
-	int c, antenna = 1, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
-	int ppm_error = 0;
-	unsigned int subdev = 0, decimation = 192;
-	long int fpga_master_clock_freq = 52000000;
-	float gain = 0;
-	double freq = -1.0, fd;
-	usrp_source *u;
+  char *endptr;
+  int c, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
+  int ppm_error = 0;
+  unsigned int subdev = 0, decimation = 29;
+  long int fpga_master_clock_freq = 8000000; // lowest rate supported
+  int amp_gain = 0, lna_gain = 0, vga_gain = 0;
+  double freq = -1.0, fd;
+  usrp_source *u;
 
-	while((c = getopt(argc, argv, "f:c:s:b:R:A:g:e:d:vDh?")) != EOF) {
-		switch(c) {
-			case 'f':
-				freq = strtod(optarg, 0);
-				break;
+  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:d:vDh?")) != EOF)
+    {
+      switch (c)
+	{
+	case 'f':
+	  freq = strtod (optarg, 0);
+	  break;
 
-			case 'c':
-				chan = strtoul(optarg, 0, 0);
-				break;
+	case 'c':
+	  chan = strtoul (optarg, 0, 0);
+	  break;
 
-			case 's':
-				if((bi = str_to_bi(optarg)) == -1) {
-					fprintf(stderr, "error: bad band "
-					   "indicator: ``%s''\n", optarg);
-					usage(argv[0]);
-				}
-				bts_scan = 1;
-				break;
+	case 's':
+	  if ((bi = str_to_bi (optarg)) == -1)
+	    {
+	      fprintf (stderr, "error: bad band "
+		       "indicator: ``%s''\n", optarg);
+	      usage (argv[0]);
+	    }
+	  bts_scan = 1;
+	  break;
 
-			case 'b':
-				if((bi = str_to_bi(optarg)) == -1) {
-					fprintf(stderr, "error: bad band "
-					   "indicator: ``%s''\n", optarg);
-					usage(argv[0]);
-				}
-				break;
+	case 'b':
+	  if ((bi = str_to_bi (optarg)) == -1)
+	    {
+	      fprintf (stderr, "error: bad band "
+		       "indicator: ``%s''\n", optarg);
+	      usage (argv[0]);
+	    }
+	  break;
 
-			case 'R':
-				errno = 0;
-				subdev = strtoul(optarg, &endptr, 0);
-				if((!errno) && (endptr != optarg))
-					break;
-				if(tolower(*optarg) == 'a') {
-					subdev = 0;
-				} else if(tolower(*optarg) == 'b') {
-					subdev = 1;
-				} else {
-					fprintf(stderr, "error: bad side: "
-					   "``%s''\n",
-					   optarg);
-					usage(argv[0]);
-				}
-				break;
+	case 'R':
+	  errno = 0;
+	  subdev = strtoul (optarg, &endptr, 0);
+	  if ((!errno) && (endptr != optarg))
+	    break;
+	  if (tolower (*optarg) == 'a')
+	    {
+	      subdev = 0;
+	    }
+	  else if (tolower (*optarg) == 'b')
+	    {
+	      subdev = 1;
+	    }
+	  else
+	    {
+	      fprintf (stderr, "error: bad side: " "``%s''\n", optarg);
+	      usage (argv[0]);
+	    }
+	  break;
 
-			case 'A':
-				if(!strcmp(optarg, "RX2")) {
-					antenna = 1;
-				} else if(!strcmp(optarg, "TX/RX")) {
-					antenna = 0;
-				} else {
-					errno = 0;
-					antenna = strtoul(optarg, &endptr, 0);
-					if(errno || (endptr == optarg)) {
-						fprintf(stderr, "error: bad "
-						   "antenna: ``%s''\n",
-						   optarg);
-						usage(argv[0]);
-					}
-				}
-				break;
+	case 'a':
+	  amp_gain = 1;
+	  break;
 
-			case 'g':
-				gain = strtof(optarg, 0) * 10;
-				break;
+	case 'g':
+	  vga_gain = atoi (optarg);
+	  break;
 
-			case 'F':
-				fpga_master_clock_freq = strtol(optarg, 0, 0);
-				if(!fpga_master_clock_freq)
-					fpga_master_clock_freq = (long int)strtod(optarg, 0); 
+	case 'l':
+	  lna_gain = atoi (optarg);
+	  break;
 
-				// was answer in MHz?
-				if(fpga_master_clock_freq < 1000) {
-					fpga_master_clock_freq *= 1000000;
-				}
-				break;
+	case 'F':
+	  fpga_master_clock_freq = strtol (optarg, 0, 0);
+	  if (!fpga_master_clock_freq)
+	    fpga_master_clock_freq = (long int) strtod (optarg, 0);
 
-			case 'e':
-				ppm_error = strtol(optarg, 0, 0);
-				break;
+	  // was answer in MHz?
+	  if (fpga_master_clock_freq < 1000)
+	    {
+	      fpga_master_clock_freq *= 1000000;
+	    }
+	  break;
 
-			case 'd':
-				subdev = strtol(optarg, 0, 0);
-				break;
+	case 'e':
+	  ppm_error = strtol (optarg, 0, 0);
+	  break;
 
-			case 'v':
-				g_verbosity++;
-				break;
+	case 'd':
+	  subdev = strtol (optarg, 0, 0);
+	  break;
 
-			case 'D':
-				g_debug = 1;
-				break;
+	case 'v':
+	  g_verbosity++;
+	  break;
 
-			case 'h':
-			case '?':
-			default:
-				usage(argv[0]);
-				break;
-		}
+	case 'D':
+	  g_debug = 1;
+	  break;
 
+	case 'h':
+	case '?':
+	default:
+	  usage (argv[0]);
+	  break;
 	}
 
-	// sanity check frequency / channel
-	if(bts_scan) {
-		if(bi == BI_NOT_DEFINED) {
-			fprintf(stderr, "error: scaning requires band\n");
-			usage(argv[0]);
-		}
-	} else {
-		if(freq < 0.0) {
-			if(chan < 0) {
-				fprintf(stderr, "error: must enter channel or "
-				   "frequency\n");
-				usage(argv[0]);
-			}
-			if((freq = arfcn_to_freq(chan, &bi)) < 869e6)
-				usage(argv[0]);
-		}
-		if((freq < 869e6) || (2e9 < freq)) {
-			fprintf(stderr, "error: bad frequency: %lf\n", freq);
-			usage(argv[0]);
-		}
-		chan = freq_to_arfcn(freq, &bi);
-	}
-
-#if 0
-	// sanity check clock
-	if(fpga_master_clock_freq < 48000000) {
-		fprintf(stderr, "error: FPGA master clock too slow: %li\n", fpga_master_clock_freq);
-		usage(argv[0]);
-	}
-
-	// calculate decimation -- get as close to GSM rate as we can
-	fd = (double)fpga_master_clock_freq / GSM_RATE;
-	decimation = (unsigned int)fd;
-#endif
-	if(g_debug) {
-#ifdef D_HOST_OSX
-		printf("debug: Mac OS X version\n");
-#endif
-		printf("debug: FPGA Master Clock Freq:\t%li\n", fpga_master_clock_freq);
-		printf("debug: decimation            :\t%u\n", decimation);
-		printf("debug: RX Subdev Spec        :\t%s\n", subdev? "B" : "A");
-		printf("debug: Antenna               :\t%s\n", antenna? "RX2" : "TX/RX");
-		printf("debug: Gain                  :\t%f\n", gain);
-	}
-
-	u = new usrp_source(decimation, fpga_master_clock_freq);
-	if(!u) {
-		fprintf(stderr, "error: usrp_source\n");
-		return -1;
-	}
-	if(u->open(subdev) == -1) {
-		fprintf(stderr, "error: usrp_source::open\n");
-		return -1;
-	}
-//	u->set_antenna(antenna);
-    if(!u->set_gain(gain)) {
-        fprintf(stderr, "error: usrp_source::set_gain\n");
-        return -1;
     }
 
-	if (ppm_error != 0) {
-		if(u->set_freq_correction(ppm_error) < 0) {
-			fprintf(stderr, "error: usrp_source::set_freq_correction\n");
-			return -1;
-		}
+  // sanity check frequency / channel
+  if (bts_scan)
+    {
+      if (bi == BI_NOT_DEFINED)
+	{
+	  fprintf (stderr, "error: scaning requires band\n");
+	  usage (argv[0]);
+	}
+    }
+  else
+    {
+      if (freq < 0.0)
+	{
+	  if (chan < 0)
+	    {
+	      fprintf (stderr, "error: must enter channel or " "frequency\n");
+	      usage (argv[0]);
+	    }
+	  if ((freq = arfcn_to_freq (chan, &bi)) < 869e6)
+	    usage (argv[0]);
+	}
+      if ((freq < 869e6) || (2e9 < freq))
+	{
+	  fprintf (stderr, "error: bad frequency: %lf\n", freq);
+	  usage (argv[0]);
+	}
+      chan = freq_to_arfcn (freq, &bi);
+    }
+
+  // calculate decimation -- get as close to GSM rate as we can
+  fd = (double) fpga_master_clock_freq / GSM_RATE;
+  decimation = (unsigned int) fd;
+  if (g_debug)
+    {
+#ifdef D_HOST_OSX
+      printf ("debug: Mac OS X version\n");
+#endif
+      printf ("debug: FPGA Master Clock Freq:\t%li\n",
+	      fpga_master_clock_freq);
+      printf ("debug: decimation            :\t%u\n", decimation);
+      printf ("debug: RX Subdev Spec        :\t%s\n", subdev ? "B" : "A");
+      printf ("debug: RF Amp                :\t%s\n",
+	      amp_gain ? "ON" : "OFF");
+      printf ("debug: LNA (IF) Gain         :\t%d\n", lna_gain);
+      printf ("debug: VGA (BB) Gain         :\t%d\n", vga_gain);
+    }
+
+  u = new usrp_source (decimation, fpga_master_clock_freq);
+  if (!u)
+    {
+      fprintf (stderr, "error: usrp_source\n");
+      return -1;
+    }
+  if (u->open (subdev) == -1)
+    {
+      fprintf (stderr, "error: usrp_source::open\n");
+      return -1;
+    }
+  if (!u->set_gain (amp_gain, lna_gain, vga_gain))
+    {
+      fprintf (stderr, "error: usrp_source::set_gain\n");
+      return -1;
+    }
+
+  if (ppm_error != 0)
+    {
+      if (u->set_freq_correction (ppm_error) < 0)
+	{
+	  fprintf (stderr, "error: usrp_source::set_freq_correction\n");
+	  return -1;
+	}
+    }
+
+  if (!bts_scan)
+    {
+      if (!u->tune (freq))
+	{
+	  fprintf (stderr, "error: usrp_source::tune\n");
+	  return -1;
 	}
 
-	if(!bts_scan) {
-		if(!u->tune(freq)) {
-			fprintf(stderr, "error: usrp_source::tune\n");
-			return -1;
-		}
+      fprintf (stderr, "%s: Calculating clock frequency offset.\n",
+	       basename (argv[0]));
+      fprintf (stderr, "Using %s channel %d (%.1fMHz)\n",
+	       bi_to_str (bi), chan, freq / 1e6);
 
-		fprintf(stderr, "%s: Calculating clock frequency offset.\n",
-		   basename(argv[0]));
-		fprintf(stderr, "Using %s channel %d (%.1fMHz)\n",
-		   bi_to_str(bi), chan, freq / 1e6);
+      return offset_detect (u);
+    }
 
-		return offset_detect(u);
-	}
+  fprintf (stderr, "%s: Scanning for %s base stations.\n",
+	   basename (argv[0]), bi_to_str (bi));
 
-	fprintf(stderr, "%s: Scanning for %s base stations.\n",
-	   basename(argv[0]), bi_to_str(bi));
-
-	return c0_detect(u, bi);
+  return c0_detect (u, bi);
 }
