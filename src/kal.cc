@@ -110,7 +110,7 @@ main (int argc, char **argv)
 {
 
   char *endptr;
-  int c, antenna = 1, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
+  int c, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
   int ppm_error = 0;
   unsigned int subdev = 0, decimation = 192;
   long int fpga_master_clock_freq = 52000000;
@@ -118,7 +118,7 @@ main (int argc, char **argv)
   double freq = -1.0, fd;
   usrp_source *u;
 
-  while ((c = getopt (argc, argv, "f:c:s:b:R:A:ag:l:e:d:vDh?")) != EOF)
+  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:d:vDh?")) != EOF)
     {
       switch (c)
 	{
@@ -166,27 +166,6 @@ main (int argc, char **argv)
 	    {
 	      fprintf (stderr, "error: bad side: " "``%s''\n", optarg);
 	      usage (argv[0]);
-	    }
-	  break;
-
-	case 'A':
-	  if (!strcmp (optarg, "RX2"))
-	    {
-	      antenna = 1;
-	    }
-	  else if (!strcmp (optarg, "TX/RX"))
-	    {
-	      antenna = 0;
-	    }
-	  else
-	    {
-	      errno = 0;
-	      antenna = strtoul (optarg, &endptr, 0);
-	      if (errno || (endptr == optarg))
-		{
-		  fprintf (stderr, "error: bad " "antenna: ``%s''\n", optarg);
-		  usage (argv[0]);
-		}
 	    }
 	  break;
 
@@ -290,8 +269,6 @@ main (int argc, char **argv)
 	      fpga_master_clock_freq);
       printf ("debug: decimation            :\t%u\n", decimation);
       printf ("debug: RX Subdev Spec        :\t%s\n", subdev ? "B" : "A");
-      printf ("debug: Antenna               :\t%s\n",
-	      antenna ? "RX2" : "TX/RX");
       printf ("debug: RF Amp                :\t%s\n",
 	      amp_gain ? "ON" : "OFF");
       printf ("debug: LNA (IF) Gain         :\t%d\n", lna_gain);
@@ -309,7 +286,6 @@ main (int argc, char **argv)
       fprintf (stderr, "error: usrp_source::open\n");
       return -1;
     }
-//      u->set_antenna(antenna);
   if (!u->set_gain (amp_gain, lna_gain, vga_gain))
     {
       fprintf (stderr, "error: usrp_source::set_gain\n");
