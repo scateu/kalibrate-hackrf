@@ -110,7 +110,8 @@ offset_detect (usrp_source * u)
 
 	      if (g_verbosity > 0)
 		{
-		  fprintf (stderr, "\toffset %3u: %.2f\n", count, offset);
+		  fprintf (stderr, "\toffset %3u/%3u: %.2f\n", count,
+			   AVG_COUNT, offset);
 		}
 	    }
 	}
