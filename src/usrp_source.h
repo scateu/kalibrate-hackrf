@@ -45,7 +45,7 @@ public:
   int tune (double freq);
   int set_freq_correction (int ppm);
   bool set_antenna (int antenna);
-  bool set_gain (float gain);
+  bool set_gain (int amp_gain, int lna_gain, int vga_gain);
   void start ();
   void stop ();
   int flush (unsigned int flush_count = FLUSH_COUNT);

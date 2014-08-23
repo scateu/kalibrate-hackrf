@@ -93,7 +93,9 @@ usage (char *prog)
   printf ("\t-f\tfrequency of nearby GSM base station\n");
   printf ("\t-c\tchannel of nearby GSM base station\n");
   printf ("\t-b\tband indicator (GSM850, GSM-R, GSM900, EGSM, DCS, PCS)\n");
-  printf ("\t-g\tgain in dB\n");
+  printf ("\t-a\trf amplifier enable\n");
+  printf ("\t-g\tvga (bb) gain in dB, 0-40dB, 8dB step\n");
+  printf ("\t-l\tlna (if) gain in dB, 0-62dB, 2dB step\n");
   printf ("\t-d\trtl-sdr device index\n");	// TODO: fuck it off.
   printf ("\t-e\tinitial frequency error in ppm\n");
   printf ("\t-v\tverbose\n");
@@ -112,11 +114,11 @@ main (int argc, char **argv)
   int ppm_error = 0;
   unsigned int subdev = 0, decimation = 192;
   long int fpga_master_clock_freq = 52000000;
-  float gain = 0;
+  int amp_gain = 0, lna_gain = 0, vga_gain = 0;
   double freq = -1.0, fd;
   usrp_source *u;
 
-  while ((c = getopt (argc, argv, "f:c:s:b:R:A:g:e:d:vDh?")) != EOF)
+  while ((c = getopt (argc, argv, "f:c:s:b:R:A:ag:l:e:d:vDh?")) != EOF)
     {
       switch (c)
 	{
@@ -188,8 +190,16 @@ main (int argc, char **argv)
 	    }
 	  break;
 
+	case 'a':
+	  amp_gain = 1;
+	  break;
+
 	case 'g':
-	  gain = strtof (optarg, 0) * 10;
+	  vga_gain = atoi (optarg);
+	  break;
+
+	case 'l':
+	  lna_gain = atoi (optarg);
 	  break;
 
 	case 'F':
@@ -282,7 +292,10 @@ main (int argc, char **argv)
       printf ("debug: RX Subdev Spec        :\t%s\n", subdev ? "B" : "A");
       printf ("debug: Antenna               :\t%s\n",
 	      antenna ? "RX2" : "TX/RX");
-      printf ("debug: Gain                  :\t%f\n", gain);
+      printf ("debug: RF Amp                :\t%s\n",
+	      amp_gain ? "ON" : "OFF");
+      printf ("debug: LNA (IF) Gain         :\t%d\n", lna_gain);
+      printf ("debug: VGA (BB) Gain         :\t%d\n", vga_gain);
     }
 
   u = new usrp_source (decimation, fpga_master_clock_freq);
@@ -297,7 +310,7 @@ main (int argc, char **argv)
       return -1;
     }
 //      u->set_antenna(antenna);
-  if (!u->set_gain (gain))
+  if (!u->set_gain (amp_gain, lna_gain, vga_gain))
     {
       fprintf (stderr, "error: usrp_source::set_gain\n");
       return -1;

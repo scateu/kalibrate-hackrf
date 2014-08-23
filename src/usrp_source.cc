@@ -187,26 +187,33 @@ usrp_source::set_freq_correction (int ppm)
   return 0;			// TODO: add support for ppm correction
 }
 
-bool
-usrp_source::set_antenna (int antenna)
+bool usrp_source::set_antenna (int antenna)
 {
 
   return 0;
 }
 
-bool
-usrp_source::set_gain (float gain)
+bool usrp_source::set_gain (int amp_gain, int lna_gain, int vga_gain)
 {
-  //int g = gain * 10;
+  int
+    r = 0;
 
-  //fprintf(stderr, "Setting gain: %.1f dB\n", gain/10);
-  int r = 0;
+  lna_gain = (((lna_gain + 7) / 8) * 8);
+  vga_gain = (((vga_gain + 1) / 2) * 2);
 
+  if (lna_gain > 40)
+    lna_gain = 40;
+  if (vga_gain > 62)
+    vga_gain = 62;
   if (g_verbosity)
-    printf ("hackrf: set gain\n");
-  r = hackrf_set_amp_enable (dev, 1);
-  r |= hackrf_set_vga_gain (dev, 32);
-  r |= hackrf_set_lna_gain (dev, 32);
+    printf ("hackrf: set gain %d/%d/%d\n", amp_gain, vga_gain, lna_gain);
+
+  if (amp_gain)
+    r = hackrf_set_amp_enable (dev, amp_gain);
+  if (vga_gain)
+    r |= hackrf_set_vga_gain (dev, vga_gain);
+  if (lna_gain)
+    r |= hackrf_set_lna_gain (dev, lna_gain);
   return (r < 0) ? 0 : 1;
 }
 
