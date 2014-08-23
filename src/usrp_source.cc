@@ -165,7 +165,8 @@ usrp_source::tune (double freq)
     {
 
       r = hackrf_set_freq (dev, (uint64_t) freq);
-      printf ("hackrf_set_freq: %d\n", int (freq));
+      if (g_verbosity)
+	printf ("hackrf_set_freq: %d\n", int (freq));
 
       if (r < 0)
 	fprintf (stderr, "Tuning failed!\n");
@@ -201,7 +202,8 @@ usrp_source::set_gain (float gain)
   //fprintf(stderr, "Setting gain: %.1f dB\n", gain/10);
   int r = 0;
 
-  printf ("hackrf: set gain\n");
+  if (g_verbosity)
+    printf ("hackrf: set gain\n");
   r = hackrf_set_amp_enable (dev, 1);
   r |= hackrf_set_vga_gain (dev, 32);
   r |= hackrf_set_lna_gain (dev, 32);
@@ -223,7 +225,8 @@ usrp_source::open (unsigned int subdev)
   m_sample_rate = 1000000;
 
 
-  printf ("hackrf_init()\n");
+  if (g_verbosity)
+    printf ("hackrf_init()\n");
   r = hackrf_init ();
   if (r != HACKRF_SUCCESS)
     {
@@ -231,7 +234,8 @@ usrp_source::open (unsigned int subdev)
       return EXIT_FAILURE;
     }
 
-  printf ("hackrf_open()\n");
+  if (g_verbosity)
+    printf ("hackrf_open()\n");
   r = hackrf_open (&dev);
   if (r != HACKRF_SUCCESS)
     {
@@ -241,7 +245,8 @@ usrp_source::open (unsigned int subdev)
 
   /* Set the sample rate */
   r = hackrf_set_sample_rate (dev, samp_rate);
-  printf ("hackrf_set_sample_rate()\n");
+  if (g_verbosity)
+    printf ("hackrf_set_sample_rate()\n");
   if (r != HACKRF_SUCCESS)
     fprintf (stderr, "WARNING: Failed to set sample rate.\n");
 
