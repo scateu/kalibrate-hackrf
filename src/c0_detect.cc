@@ -58,7 +58,7 @@ vectornorm2 (const complex * v, const unsigned int len)
 
 
 int
-c0_detect (usrp_source * u, int bi)
+c0_detect (usrp_source * u, int bi, int chan)
 {
 
 #define GSM_RATE (1625000.0 / 6.0)
@@ -91,6 +91,11 @@ c0_detect (usrp_source * u, int bi)
   u->flush ();
   for (i = first_chan (bi); i >= 0; i = next_chan (i, bi))
     {
+      if (chan > -1 && chan != i)
+        {
+          power[i] = 0;
+          continue;
+        }
       freq = arfcn_to_freq (i, &bi);
       if (!u->tune (freq))
 	{
@@ -149,7 +154,7 @@ c0_detect (usrp_source * u, int bi)
   i = first_chan (bi);
   do
     {
-      if (power[i] <= a)
+      if ((chan > -1 && i != chan) || (chan == -1 && power[i] <= a))
 	{
 	  i = next_chan (i, bi);
 	  continue;
