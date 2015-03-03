@@ -310,5 +310,5 @@ main (int argc, char **argv)
   fprintf (stderr, "%s: Scanning for %s base stations.\n",
 	   basename (argv[0]), bi_to_str (bi));
 
-  return c0_detect (u, bi);
+  return c0_detect (u, bi, chan);
 }
