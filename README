@@ -20,3 +20,10 @@ Thanks to chris.kuethe@gmail.com who did a bunch of tinkering with this port of 
 https://github.com/ckuethe/kalibrate-hackrf/
 
 This now runs as fast as kalibrate-rtl
+
+
+2015-3-3 Update:
+
+Add ability to specify channel when scanning to check power output for a single channel.
+
+Author: [xorrbit](https://github.com/xorrbit)
