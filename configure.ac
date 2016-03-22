@@ -36,6 +36,7 @@ AC_CANONICAL_HOST
 case "$host_os" in
 	darwin*)
 		AC_DEFINE([D_HOST_OSX], [], [building for OSX])
+		AM_CONDITIONAL([DARWIN], true)
 		;;
 esac
 
@@ -44,6 +45,8 @@ case "$host_cpu" in
 		AC_DEFINE([D_HOST_OSX], [], [building without shared memory])
 		;;
 esac
+
+AM_CONDITIONAL([DARWIN], false)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])

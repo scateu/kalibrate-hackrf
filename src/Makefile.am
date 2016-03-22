@@ -20,4 +20,9 @@ kal_SOURCES = \
    version.h
 
 kal_CXXFLAGS = $(FFTW3_CFLAGS) $(LIBHACKRF_CFLAGS)
+
+if DARWIN
+kal_LDADD = $(FFTW3_LIBS) $(LIBHACKRF_LIBS)
+else
 kal_LDADD = $(FFTW3_LIBS) $(LIBHACKRF_LIBS) -lrt
+endif

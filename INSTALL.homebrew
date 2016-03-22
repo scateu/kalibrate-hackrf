@@ -1,0 +1,5 @@
+$ brew install fftw hackrf libtool
+$ ./bootstrap
+$ ./configure
+$ make
+
