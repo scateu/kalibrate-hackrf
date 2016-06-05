@@ -31,6 +31,8 @@ PKG_CHECK_MODULES(LIBHACKRF, libhackrf)
 AC_SUBST(LIBHACKRF_LIBS)
 AC_SUBST(LIBHACKRF_CFLAGS)
 
+AM_CONDITIONAL([DARWIN], false)
+
 # OSX doesn't support System V shared memory
 AC_CANONICAL_HOST
 case "$host_os" in
@@ -45,8 +47,6 @@ case "$host_cpu" in
 		AC_DEFINE([D_HOST_OSX], [], [building without shared memory])
 		;;
 esac
-
-AM_CONDITIONAL([DARWIN], false)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
