@@ -27,3 +27,9 @@ This now runs as fast as kalibrate-rtl
 Add ability to specify channel when scanning to check power output for a single channel.
 
 Author: [xorrbit](https://github.com/xorrbit)
+
+2016-6-6 Update:
+
+Fix library not found for -lrt on OS X. 
+
+Author: @rxseger 
