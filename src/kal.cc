@@ -98,6 +98,7 @@ usage (char *prog)
   printf ("\t-l\tlna (if) gain in dB, 0-62dB, 2dB step\n");
   printf ("\t-d\trtl-sdr device index\n");	// TODO: fuck it off.
   printf ("\t-e\tinitial frequency error in ppm\n");
+  printf ("\t-E\tmanual frequency offset in hz\n");
   printf ("\t-v\tverbose\n");
   printf ("\t-D\tenable debug messages\n");
   printf ("\t-h\thelp\n");
@@ -111,14 +112,14 @@ main (int argc, char **argv)
 
   char *endptr;
   int c, bi = BI_NOT_DEFINED, chan = -1, bts_scan = 0;
-  int ppm_error = 0;
+  int ppm_error = 0, hz_adjust = 0;
   unsigned int subdev = 0, decimation = 29;
   long int fpga_master_clock_freq = 8000000; // lowest rate supported
   int amp_gain = 0, lna_gain = 0, vga_gain = 0;
   double freq = -1.0, fd;
   usrp_source *u;
 
-  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:d:vDh?")) != EOF)
+  while ((c = getopt (argc, argv, "f:c:s:b:R:ag:l:e:E:d:vDh?")) != EOF)
     {
       switch (c)
 	{
@@ -196,6 +197,10 @@ main (int argc, char **argv)
 	case 'e':
 	  ppm_error = strtol (optarg, 0, 0);
 	  break;
+
+    case 'E':
+      hz_adjust = strtol(optarg, 0, 0);
+      break;
 
 	case 'd':
 	  subdev = strtol (optarg, 0, 0);
@@ -293,7 +298,7 @@ main (int argc, char **argv)
 
   if (!bts_scan)
     {
-      if (!u->tune (freq))
+      if (!u->tune (freq+hz_adjust))
 	{
 	  fprintf (stderr, "error: usrp_source::tune\n");
 	  return -1;
@@ -304,7 +309,7 @@ main (int argc, char **argv)
       fprintf (stderr, "Using %s channel %d (%.1fMHz)\n",
 	       bi_to_str (bi), chan, freq / 1e6);
 
-      return offset_detect (u);
+      return offset_detect (u, hz_adjust);
     }
 
   fprintf (stderr, "%s: Scanning for %s base stations.\n",
