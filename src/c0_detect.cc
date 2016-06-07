@@ -180,7 +180,7 @@ c0_detect (usrp_source * u, int bi, int chan)
 
       b = (complex *) ub->peek (&b_len);
       r = l->scan (b, b_len, &offset, 0);
-      if (r && (fabsf (offset - GSM_RATE / 4) < ERROR_DETECT_OFFSET_MAX))
+      if (r && (fabs (offset - GSM_RATE / 4) < ERROR_DETECT_OFFSET_MAX))
 	{
 	  // found
 	  printf ("\tchan: %4d (%.1fMHz ", i, freq / 1e6);
