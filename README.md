@@ -14,15 +14,15 @@ The documentation below is adapted from the original website at
 
 ## On Clocks
 
-The [USRP1](http://www.ettus.com/), similar to a number of devices, has a built-in
+SDRs have a built-in
 [oscillator](http://en.wikipedia.org/wiki/Electronic_oscillator) which is only
-guaranteed accurate to within 20 parts per million (ppm). (Although in practice
+guaranteed accurate to within some range (for example, the USRP1 to 20 parts per million (ppm). (Although in practice
 the USRP oscillator is normally closer to 3ppm.) This is sufficient for a number
-of purposes, but not for others. Fortunately, the USRP also supports an external
-oscillator. For example, the [Clock Tamer](http://code.google.com/p/clock-tamer/),
+of purposes, but not for others. Some SDRs (including the HackRF and USRP) also support external
+oscillators. For example, the [Clock Tamer](http://code.google.com/p/clock-tamer/),
 the [KSP 52MHz](http://kestrelsignalprocessing.mybigcommerce.com/products/52MHz-clock-generator.html)
 and the [FA-SY 1](http://www.box73.de/catalog/product_info.php?products_id=1869)
-are all accurate clocks that work well with the USRP.
+are all accurate clocks.
 
 Normally, these external clocks must be calibrated to ensure they are set as
 accurately as possible. An oscilloscope is probably the best way to determine
