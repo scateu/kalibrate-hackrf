@@ -20,15 +20,15 @@ guaranteed accurate to within some range (for example, the USRP1 to 20 parts per
 the USRP oscillator is normally closer to 3ppm.) This is sufficient for a number
 of purposes, but not for others. Some SDRs (including the HackRF and USRP) also support external
 oscillators. For example, the [Clock Tamer](http://code.google.com/p/clock-tamer/),
-the [KSP 52MHz](http://kestrelsignalprocessing.mybigcommerce.com/products/52MHz-clock-generator.html)
-and the [FA-SY 1](http://www.box73.de/catalog/product_info.php?products_id=1869)
+the [KSP 52MHz](https://web.archive.org/web/20100518194722/http://kestrelsignalprocessing.mybigcommerce.com/products/52MHz-clock-generator.html)
+and the [FA-SY 1](https://web.archive.org/web/20101221022021/http://www.box73.de/catalog/product_info.php?products_id=1869)
 are all accurate clocks.
 
 Normally, these external clocks must be calibrated to ensure they are set as
 accurately as possible. An oscilloscope is probably the best way to determine
 the accuracy of these clocks. However a good oscilloscope is expensive and not
 everyone has access to one. There are other ways to calibrate these devices --
-the FA-SY 1 documentation discusses using the [WWV](http://en.wikipedia.org/wiki/WWVB)
+the FA-SY 1 documentation discusses using the [WWVB](http://en.wikipedia.org/wiki/WWVB)
 time signals. Similarly, GSM base stations are required to be accurate to within
 0.05ppm and so they can also provide an accurate reference clock.
 
