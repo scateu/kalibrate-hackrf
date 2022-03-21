@@ -185,3 +185,8 @@ Copyright (c) 2014, Wang Kang (scateu@gmail.com)
 http://hackrf.net  : A Chinese HackRF Community
 
 
+## Windows pre-compiled version
+
+Thanks to ikaya1965:
+ - <https://github.com/ikaya1965/-smail-Kaya>
+
